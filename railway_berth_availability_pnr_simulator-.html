@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RailSim India | Railway Berth Availability & Waitlist PNR Simulator</title>
+
+    <!-- Tailwind CSS CDN for modern responsive utility layout -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts: Inter for clean UI & JetBrains Mono for PNR/Ticket numbers -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome Icons for train, ticket, and status icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Internal CSS for status color themes and interactive transitions -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+            color: #0f172a;
+        }
+
+        .mono-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* 1. GREEN STATUS: Confirmed / Available Berths */
+        .status-card-green {
+            background-color: #f0fdf4;
+            border: 2px solid #22c55e;
+            color: #14532d;
+        }
+        .status-badge-green {
+            background-color: #16a34a;
+            color: #ffffff;
+        }
+
+        /* 2. YELLOW/AMBER STATUS: RAC (Reservation Against Cancellation) */
+        .status-card-yellow {
+            background-color: #fefce8;
+            border: 2px solid #eab308;
+            color: #713f12;
+        }
+        .status-badge-yellow {
+            background-color: #ca8a04;
+            color: #ffffff;
+        }
+
+        /* 3. RED STATUS: Waitlist (WL) */
+        .status-card-red {
+            background-color: #fef2f2;
+            border: 2px solid #ef4444;
+            color: #7f1d1d;
+        }
+        .status-badge-red {
+            background-color: #dc2626;
+            color: #ffffff;
+        }
+
+        /* Smooth hover lift effect for Class Availability Cards */
+        .berth-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .berth-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.12);
+        }
+
+        /* Progress Bar Animation for Waitlist Confirmation Probability Meter */
+        .probability-fill {
+            transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s ease;
+        }
+
+        /* Subtle railway track pattern divider */
+        .railway-divider {
+            background-image: repeating-linear-gradient(
+                90deg,
+                #cbd5e1 0px,
+                #cbd5e1 12px,
+                transparent 12px,
+                transparent 24px
+            );
+            height: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- =====================================================================
+         SECTION 1: HEADER & NAVIGATION BAR
+    ====================================================================== -->
+    <header class="bg-slate-900 text-white sticky top-0 z-40 shadow-lg border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+            
+            <!-- Brand Title & Project Badge -->
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/30">
+                    <i class="fa-solid fa-train-subway text-xl"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2.5 flex-wrap">
+                        <span class="font-extrabold text-lg sm:text-xl tracking-tight text-white">
+                            RailSim India | Berth &amp; PNR Status Simulator
+                        </span>
+                        <span class="text-xs font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30">
+                            LPU B.Tech CA Project
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-400 hidden sm:block">
+                        Railway Passenger Berth Availability &amp; Waitlist PNR Confirmation Predictor
+                    </p>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="flex items-center gap-2 sm:gap-6 text-sm font-medium">
+                <a href="#search-section" class="px-3 py-1.5 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-white transition">
+                    <i class="fa-solid fa-train mr-1.5 text-blue-400"></i>Train Availability
+                </a>
+                <a href="#pnr-section" class="px-3 py-1.5 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-white transition">
+                    <i class="fa-solid fa-ticket mr-1.5 text-emerald-400"></i>PNR Tracker
+                </a>
+                <a href="#guide-section" class="px-3 py-1.5 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-white transition">
+                    <i class="fa-solid fa-book-open mr-1.5 text-amber-400"></i>Reservation Terms
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- =====================================================================
+         HERO BANNER
+    ====================================================================== -->
+    <section class="bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white py-8 sm:py-10 border-b border-slate-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-3xl">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-400/20 text-blue-300 text-xs font-medium mb-3">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Real-Time Frontend Simulation &bull; Indian Railways Reservation Model
+                </div>
+                <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+                    Railway Passenger Berth Availability &amp; Waitlist PNR Status Simulator
+                </h1>
+                <p class="mt-3 text-slate-300 text-sm sm:text-base leading-relaxed">
+                    Check seat availability across <strong>1st AC (1A)</strong>, <strong>2nd AC (2A)</strong>, <strong>3rd AC (3A)</strong>, and <strong>Sleeper (SL)</strong> classes, understand <strong>Confirmed / RAC / WL</strong> reservation codes, and evaluate waitlist confirmation probability based on historical cancellation trends.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12 flex-grow w-full">
+
+        <!-- =====================================================================
+             SECTION 2: TRAIN SEARCH FORM & CLASS-WISE SEAT AVAILABILITY
+        ====================================================================== -->
+        <section id="search-section" class="scroll-mt-20">
+            <div class="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
+                
+                <!-- Section Header & Traffic Preset Filters -->
+                <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-train text-blue-600"></i>
+                            1. Train Search &amp; Class-Wise Berth Availability
+                        </h2>
+                        <p class="text-xs sm:text-sm text-slate-500">
+                            Select origin, destination, travel date, and booking quota to view berth status across 1A, 2A, 3A, and SL.
+                        </p>
+                    </div>
+
+                    <!-- Traffic Season Simulation Presets -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-1">Demand Load:</span>
+                        <button type="button" onclick="loadScenario('normal')" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition">
+                            <i class="fa-solid fa-check-circle mr-1"></i>Regular Season (Default)
+                        </button>
+                        <button type="button" onclick="loadScenario('rush')" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition">
+                            <i class="fa-solid fa-fire mr-1"></i>Peak Holiday Rush
+                        </button>
+                        <button type="button" onclick="loadScenario('tatkal')" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition">
+                            <i class="fa-solid fa-bolt mr-1"></i>Tatkal Window
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Train Search Form -->
+                <form id="trainSearchForm" class="p-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
+                        
+                        <!-- Origin Station Dropdown -->
+                        <div class="lg:col-span-3">
+                            <label for="originStation" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                                <i class="fa-solid fa-location-dot text-blue-600 mr-1"></i>Origin Station
+                            </label>
+                            <select id="originStation" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none transition">
+                                <option value="PGW - Phagwara Jn" selected>PGW - Phagwara Jn</option>
+                                <option value="NDLS - New Delhi">NDLS - New Delhi</option>
+                                <option value="LDH - Ludhiana Jn">LDH - Ludhiana Jn</option>
+                                <option value="JRC - Jalandhar Cantt">JRC - Jalandhar Cantt</option>
+                                <option value="ASR - Amritsar Jn">ASR - Amritsar Jn</option>
+                                <option value="CSMT - Mumbai">CSMT - Mumbai</option>
+                            </select>
+                        </div>
+
+                        <!-- Swap Origin and Destination Button -->
+                        <div class="lg:col-span-1 flex justify-center">
+                            <button type="button" id="swapStationsBtn" title="Swap Origin & Destination" class="w-10 h-10 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-600 flex items-center justify-center transition shadow-sm">
+                                <i class="fa-solid fa-right-left"></i>
+                            </button>
+                        </div>
+
+                        <!-- Destination Station Dropdown -->
+                        <div class="lg:col-span-3">
+                            <label for="destStation" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                                <i class="fa-solid fa-flag-checkered text-emerald-600 mr-1"></i>Destination Station
+                            </label>
+                            <select id="destStation" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none transition">
+                                <option value="NDLS - New Delhi" selected>NDLS - New Delhi</option>
+                                <option value="PGW - Phagwara Jn">PGW - Phagwara Jn</option>
+                                <option value="LDH - Ludhiana Jn">LDH - Ludhiana Jn</option>
+                                <option value="JRC - Jalandhar Cantt">JRC - Jalandhar Cantt</option>
+                                <option value="ASR - Amritsar Jn">ASR - Amritsar Jn</option>
+                                <option value="CSMT - Mumbai">CSMT - Mumbai</option>
+                            </select>
+                        </div>
+
+                        <!-- Travel Date Input -->
+                        <div class="lg:col-span-2">
+                            <label for="travelDate" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                                <i class="fa-regular fa-calendar-days text-blue-600 mr-1"></i>Travel Date
+                            </label>
+                            <input type="date" id="travelDate" required class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none transition">
+                        </div>
+
+                        <!-- Quota Selector -->
+                        <div class="lg:col-span-3">
+                            <label for="quotaSelect" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                                <i class="fa-solid fa-users-gear text-amber-600 mr-1"></i>Reservation Quota
+                            </label>
+                            <select id="quotaSelect" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none transition">
+                                <option value="GN" selected>General Quota (GN)</option>
+                                <option value="TQ">Tatkal Quota (TQ)</option>
+                                <option value="SS">Senior Citizen Quota (SS)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Inline Validation Message Box -->
+                    <div id="searchErrorBox" class="hidden mt-4 p-3.5 rounded-xl bg-rose-50 border border-rose-300 text-rose-800 text-sm font-medium flex items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation text-rose-600"></i>
+                        <span id="searchErrorText">Origin and Destination stations cannot be the same. Please select two different stations.</span>
+                    </div>
+
+                    <!-- Status Color Legend & Search Submit Button -->
+                    <div class="mt-5 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex flex-wrap items-center gap-4 text-xs font-semibold">
+                            <span class="text-slate-500">Status Indicators:</span>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+                                Available (Confirmed Berth)
+                            </span>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 text-amber-900 border border-amber-300">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                                RAC (Shared Side-Lower Seat)
+                            </span>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-rose-50 text-rose-800 border border-rose-200">
+                                <span class="w-2.5 h-2.5 rounded-full bg-rose-600"></span>
+                                WL (Waitlist Queue)
+                            </span>
+                        </div>
+
+                        <button type="submit" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-600/20 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <span>Search Trains</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Active Route Summary Banner -->
+            <div id="searchSummaryBanner" class="mt-6 flex flex-wrap items-center justify-between gap-3 px-4 py-3 rounded-xl bg-slate-800 text-white text-sm">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="px-2.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-semibold text-xs uppercase" id="summaryQuotaBadge">General Quota (GN)</span>
+                    <span class="font-bold" id="summaryRouteText">PGW - Phagwara Jn &rarr; NDLS - New Delhi</span>
+                    <span class="text-slate-400">|</span>
+                    <span class="text-slate-300 text-xs sm:text-sm" id="summaryDateText">Travel Date: Tomorrow</span>
+                </div>
+                <span class="text-xs text-slate-300">
+                    <i class="fa-regular fa-hand-pointer mr-1 text-amber-400"></i>Click any class card (1A, 2A, 3A, SL) to view berth allocation and confirmation details.
+                </span>
+            </div>
+
+            <!-- Interactive Class Breakdown Drawer (Opens when a user clicks any 1A, 2A, 3A, or SL card) -->
+            <div id="classInspectorPanel" class="hidden mt-5 bg-indigo-950 text-white rounded-2xl p-6 shadow-xl border border-indigo-800">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <span class="text-xs uppercase tracking-wider font-bold text-indigo-300" id="inspectorTrainTitle">12926 Paschim Express &bull; 3A (3rd AC)</span>
+                        <h3 class="text-xl font-extrabold mt-1 flex flex-wrap items-center gap-3">
+                            <span id="inspectorStatusBadge" class="px-3 py-1 rounded-lg text-sm font-bold bg-emerald-600">Available 42 Seats</span>
+                            <span id="inspectorHeadingText">Confirmed Berth Allocation</span>
+                            <span id="inspectorFareBadge" class="text-sm font-mono font-semibold px-2.5 py-0.5 rounded bg-indigo-900 text-amber-300 border border-indigo-700">Estimated Fare: ₹980</span>
+                        </h3>
+                    </div>
+                    <button type="button" onclick="closeInspector()" class="text-indigo-300 hover:text-white p-1.5 rounded-lg hover:bg-indigo-900">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-indigo-800/80 text-sm">
+                    <div class="bg-indigo-900/50 p-4 rounded-xl border border-indigo-800">
+                        <p class="text-xs text-indigo-300 uppercase font-semibold">Passenger Boarding &amp; Berth Rules</p>
+                        <p class="mt-1.5 text-slate-100 leading-relaxed" id="inspectorMeaningText"></p>
+                    </div>
+                    <div class="bg-indigo-900/50 p-4 rounded-xl border border-indigo-800">
+                        <p class="text-xs text-indigo-300 uppercase font-semibold">Confirmation Outlook &amp; Trend</p>
+                        <p class="mt-1.5 text-slate-100 leading-relaxed" id="inspectorProbabilityText"></p>
+                    </div>
+                    <div class="bg-indigo-900/50 p-4 rounded-xl border border-indigo-800">
+                        <p class="text-xs text-indigo-300 uppercase font-semibold">Coach Configuration &amp; Berths</p>
+                        <p class="mt-1.5 text-slate-100 leading-relaxed" id="inspectorCoachInfoText"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Train Availability Cards Container -->
+            <div id="trainResultsContainer" class="mt-4 space-y-5">
+                <!-- Populated dynamically via renderTrainCards() -->
+            </div>
+        </section>
+
+        <div class="railway-divider my-4"></div>
+
+        <!-- =====================================================================
+             SECTION 3: SIMULATED PNR STATUS TRACKER & PROBABILITY METER
+        ====================================================================== -->
+        <section id="pnr-section" class="scroll-mt-20">
+            <div class="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
+                
+                <!-- PNR Section Header -->
+                <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
+                    <h2 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-ticket-simple text-emerald-600"></i>
+                        2. Simulated 10-Digit PNR Status Tracker &amp; Confirmation Probability Meter
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-500">
+                        Enter a 10-digit PNR number to inspect <strong>Passenger Booking Status vs. Current Status</strong> and view the waitlist confirmation probability meter.
+                    </p>
+                </div>
+
+                <div class="p-6">
+                    <!-- PNR Lookup Form -->
+                    <form id="pnrForm" class="max-w-3xl">
+                        <label for="pnrInput" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                            Enter 10-Digit Passenger Name Record (PNR) Number
+                        </label>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <div class="relative flex-grow">
+                                <i class="fa-solid fa-hashtag absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                <input
+                                    type="text"
+                                    id="pnrInput"
+                                    maxlength="10"
+                                    placeholder="Enter 10-digit PNR (e.g. 2458910342)"
+                                    value="2458910342"
+                                    class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 bg-slate-50 mono-font text-base font-bold tracking-widest text-slate-900 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none transition"
+                                >
+                            </div>
+                            <button type="submit" class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-2 shrink-0">
+                                <i class="fa-solid fa-bolt"></i>
+                                <span>Check PNR Status</span>
+                            </button>
+                        </div>
+
+                        <!-- PNR Validation Error Message -->
+                        <div id="pnrErrorBox" class="hidden mt-3 p-3 rounded-xl bg-rose-50 border border-rose-300 text-rose-800 text-xs sm:text-sm font-medium flex items-center gap-2">
+                            <i class="fa-solid fa-circle-exclamation text-rose-600"></i>
+                            <span id="pnrErrorText">Please enter a valid 10-digit numeric PNR number.</span>
+                        </div>
+
+                        <!-- Clickable Sample PNR Badges -->
+                        <div class="mt-4 flex flex-wrap items-center gap-2">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1">Quick Test PNRs:</span>
+                            <button type="button" onclick="fillSamplePNR('2458910342')" class="text-xs mono-font font-semibold px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 transition">
+                                Sample High Prob: 2458910342
+                            </button>
+                            <button type="button" onclick="fillSamplePNR('4819205718')" class="text-xs mono-font font-semibold px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 transition">
+                                Sample Med Prob: 4819205718
+                            </button>
+                            <button type="button" onclick="fillSamplePNR('8391047261')" class="text-xs mono-font font-semibold px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-300 transition">
+                                Sample Low Prob: 8391047261
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- PNR Output Display Card -->
+                    <div id="pnrResultCard" class="mt-6 pt-6 border-t border-slate-200">
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                            
+                            <!-- Left Column (7 cols): Ticket Metadata & Passenger Status Table -->
+                            <div class="lg:col-span-7 space-y-4">
+                                
+                                <!-- Ticket Metadata Banner -->
+                                <div class="bg-slate-900 text-white p-5 rounded-2xl shadow-sm">
+                                    <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-700">
+                                        <div>
+                                            <span class="text-xs uppercase tracking-wider text-slate-400">PNR Number</span>
+                                            <div class="text-xl font-extrabold mono-font text-amber-400 tracking-wider" id="pnrDisplayNumber">2458910342</div>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="text-xs uppercase tracking-wider text-slate-400">Charting Status</span>
+                                            <div class="text-xs font-bold px-2.5 py-1 rounded bg-slate-800 text-slate-200 mt-0.5" id="pnrChartStatus">CHART NOT PREPARED</div>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 text-xs">
+                                        <div>
+                                            <span class="text-slate-400 block">Train No. &amp; Name</span>
+                                            <strong class="text-white text-sm" id="pnrTrainName">12926 Paschim Express</strong>
+                                        </div>
+                                        <div>
+                                            <span class="text-slate-400 block">Route</span>
+                                            <strong class="text-white text-sm" id="pnrRoute">PGW &rarr; NDLS</strong>
+                                        </div>
+                                        <div>
+                                            <span class="text-slate-400 block">Class &amp; Quota</span>
+                                            <strong class="text-white text-sm" id="pnrClassQuota">3A (3rd AC) | GN</strong>
+                                        </div>
+                                        <div>
+                                            <span class="text-slate-400 block">Journey Date</span>
+                                            <strong class="text-white text-sm" id="pnrJourneyDate">11 Nov 2026</strong>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Passenger Booking Status vs Current Status Comparison Table -->
+                                <div class="border border-slate-200 rounded-2xl overflow-hidden">
+                                    <div class="bg-slate-100 px-4 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                                        <h3 class="text-sm font-bold text-slate-800">
+                                            <i class="fa-solid fa-user-check text-blue-600 mr-1.5"></i>Passenger Status Progression
+                                        </h3>
+                                        <!-- Interactive +1 Day Cancellation Simulator Button -->
+                                        <button type="button" id="simulateCancellationBtn" class="text-xs font-bold px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition flex items-center gap-1.5 shadow-sm">
+                                            <i class="fa-solid fa-forward-step"></i>
+                                            <span>+1 Day Cancellation Simulator</span>
+                                        </button>
+                                    </div>
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full text-left border-collapse text-sm">
+                                            <thead>
+                                                <tr class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200">
+                                                    <th class="py-3 px-4 font-bold">Passenger</th>
+                                                    <th class="py-3 px-4 font-bold">Booking Status <span class="font-normal text-slate-400 block">(At Ticket Purchase)</span></th>
+                                                    <th class="py-3 px-4 font-bold">Current Status <span class="font-normal text-slate-400 block">(Live Updated)</span></th>
+                                                    <th class="py-3 px-4 font-bold">Coach / Berth Assignment</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="pnrPassengerTableBody" class="divide-y divide-slate-200">
+                                                <!-- Dynamically populated by JavaScript -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Column (5 cols): Waitlist Confirmation Probability Meter -->
+                            <div class="lg:col-span-5">
+                                <div class="h-full rounded-2xl border-2 border-slate-200 bg-slate-50 p-5 flex flex-col justify-between">
+                                    <div>
+                                        <div class="flex items-center justify-between gap-2">
+                                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">
+                                                Historical Cancellation Predictor
+                                            </span>
+                                            <span id="probLevelBadge" class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider status-badge-green">
+                                                HIGH PROBABILITY
+                                            </span>
+                                        </div>
+
+                                        <h3 class="text-lg font-extrabold text-slate-900 mt-2">
+                                            Waitlist Confirmation Probability Meter
+                                        </h3>
+
+                                        <!-- Percentage Display -->
+                                        <div class="mt-4 flex items-baseline justify-between">
+                                            <div>
+                                                <span id="probPercentageText" class="text-4xl font-extrabold mono-font text-emerald-600">86%</span>
+                                                <span class="text-xs font-semibold text-slate-500 ml-1">Confirmation Likelihood</span>
+                                            </div>
+                                            <span id="probQueueMovement" class="text-xs font-bold text-slate-600 bg-white px-2.5 py-1 rounded-lg border border-slate-200">
+                                                Moved +14 positions
+                                            </span>
+                                        </div>
+
+                                        <!-- Visual Progress Bar Meter -->
+                                        <div class="mt-3 w-full h-4 bg-slate-200 rounded-full overflow-hidden p-0.5 border border-slate-300">
+                                            <div id="probMeterBar" class="probability-fill h-full rounded-full bg-emerald-500" style="width: 86%;"></div>
+                                        </div>
+
+                                        <!-- Threshold Scale Labels -->
+                                        <div class="flex justify-between text-[11px] font-bold text-slate-400 mt-1.5">
+                                            <span class="text-rose-600">0% - 39% (LOW)</span>
+                                            <span class="text-amber-600">40% - 74% (MEDIUM)</span>
+                                            <span class="text-emerald-600">75% - 100% (HIGH)</span>
+                                        </div>
+
+                                        <!-- Historical Cancellation Trend Explanation -->
+                                        <div class="mt-5 bg-white p-4 rounded-xl border border-slate-200 space-y-2">
+                                            <div class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                                                <i class="fa-solid fa-chart-line text-blue-600"></i>
+                                                <span>Historical Trend Analysis (<span id="probReasonLabel">HIGH</span>)</span>
+                                            </div>
+                                            <p id="probExplanationText" class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                                Passenger booked at GNWL 18 and has advanced to WL 4 following 14 cancellations. General Quota (GNWL) has the highest seat allocation pool, giving this ticket an 86% confirmation rate prior to chart preparation.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Model Information Footer -->
+                                    <div class="mt-4 pt-3 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-500">
+                                        <span><i class="fa-solid fa-chart-pie mr-1 text-slate-400"></i>Model: Quota Weight &amp; Cancellation Velocity</span>
+                                        <span class="font-semibold text-slate-700">Live Simulation</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="railway-divider my-4"></div>
+
+        <!-- =====================================================================
+             SECTION 4: RAILWAY RESERVATION TERMS GUIDE
+        ====================================================================== -->
+        <section id="guide-section" class="scroll-mt-20">
+            <div class="mb-5">
+                <h2 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-blue-600"></i>
+                    3. Railway Reservation Terms Guide
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-500">
+                    Reference guide explaining Indian Railways booking status codes and reservation quotas for passengers.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                
+                <!-- Card 1: Confirmed (CNF) -->
+                <div class="bg-white rounded-2xl p-5 border-t-4 border-emerald-500 shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800 font-extrabold text-xs">
+                            AVAILABLE / CNF
+                        </span>
+                        <i class="fa-solid fa-bed text-emerald-600 text-lg"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-900 text-base">Confirmed (CNF)</h3>
+                    <p class="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                        A full dedicated sleeping berth (Lower, Middle, Upper, Side Lower, or Side Upper) is guaranteed for the passenger. Status displays in <strong class="text-emerald-700">Green (e.g., Available 42 Seats)</strong> when berths are open for immediate allotment.
+                    </p>
+                </div>
+
+                <!-- Card 2: Reservation Against Cancellation (RAC) -->
+                <div class="bg-white rounded-2xl p-5 border-t-4 border-amber-500 shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2.5 py-1 rounded-md bg-amber-100 text-amber-900 font-extrabold text-xs">
+                            RAC (Yellow)
+                        </span>
+                        <i class="fa-solid fa-people-arrows text-amber-600 text-lg"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-900 text-base">Reservation Against Cancellation</h3>
+                    <p class="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                        The passenger is permitted to board the train. Two RAC passengers share one Side-Lower berth as sitting seats (<strong class="text-amber-800">e.g., RAC 14</strong>), and are upgraded to a full sleeping berth as confirmed passengers cancel.
+                    </p>
+                </div>
+
+                <!-- Card 3: Waitlist (WL) -->
+                <div class="bg-white rounded-2xl p-5 border-t-4 border-rose-500 shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2.5 py-1 rounded-md bg-rose-100 text-rose-800 font-extrabold text-xs">
+                            WL / WAITLIST (Red)
+                        </span>
+                        <i class="fa-solid fa-hourglass-half text-rose-600 text-lg"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-900 text-base">Waitlist (WL)</h3>
+                    <p class="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                        No seat or berth is assigned yet (<strong class="text-rose-700">e.g., WL 28</strong>). The ticket advances in the queue as Confirmed and RAC passengers cancel. E-tickets still on the waitlist after chart preparation are automatically cancelled and refunded.
+                    </p>
+                </div>
+
+                <!-- Card 4: Tatkal & Senior Citizen Quotas -->
+                <div class="bg-white rounded-2xl p-5 border-t-4 border-blue-600 shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2.5 py-1 rounded-md bg-blue-100 text-blue-800 font-extrabold text-xs">
+                            GN / TQ / SS QUOTAS
+                        </span>
+                        <i class="fa-solid fa-layer-group text-blue-600 text-lg"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-900 text-base">Reservation Quotas</h3>
+                    <p class="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                        <strong>General (GN):</strong> Main seat pool with the highest waitlist confirmation rate.<br>
+                        <strong>Tatkal (TQ):</strong> Urgent travel quota opening 1 day before departure.<br>
+                        <strong>Senior Citizen (SS):</strong> Dedicated lower-berth pool for elderly passengers.
+                    </p>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- =====================================================================
+         FOOTER
+    ====================================================================== -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-6 border-t border-slate-800 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div>
+                <strong class="text-white">RailSim India</strong> &mdash; Railway Passenger Berth Availability And Waitlist PNR Status Simulator
+            </div>
+            <div>
+                Lovely Professional University (LPU) &bull; B.Tech Continuous Assessment (CA) Project
+            </div>
+        </div>
+    </footer>
+
+    <!-- =====================================================================
+         APPLICATION JAVASCRIPT
+    ====================================================================== -->
+    <script>
+        // Set default travel date to tomorrow
+        const travelDateInput = document.getElementById('travelDate');
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        travelDateInput.value = tomorrow.toISOString().split('T')[0];
+
+        // Simulated train availability datasets across 3 trains and 4 classes (1A, 2A, 3A, SL)
+        const trainScenarios = {
+            normal: [
+                {
+                    trainNo: "12926",
+                    trainName: "Paschim Superfast Express",
+                    departure: "10:15 AM",
+                    arrival: "04:30 PM",
+                    duration: "06h 15m",
+                    classes: [
+                        {
+                            code: "1A",
+                            name: "1st AC (1A)",
+                            statusType: "AVAILABLE",
+                            statusText: "Available 12 Seats",
+                            fare: 2450,
+                            probability: "100% Confirmed",
+                            meaning: "Passenger receives a guaranteed full sleeping berth inside a lockable 2-berth coupe or 4-berth cabin.",
+                            trend: "Immediate berth confirmation upon booking; cabin and berth numbers are assigned at chart preparation."
+                        },
+                        {
+                            code: "2A",
+                            name: "2nd AC (2A)",
+                            statusType: "RAC",
+                            statusText: "RAC 14",
+                            fare: 1420,
+                            probability: "High (78% CNF Chance)",
+                            meaning: "Reservation Against Cancellation (Position 14). Passenger can board the train and initially shares a Side-Lower berth.",
+                            trend: "High historical probability (78%) of upgrading to an independent full sleeping berth before departure."
+                        },
+                        {
+                            code: "3A",
+                            name: "3rd AC (3A)",
+                            statusType: "AVAILABLE",
+                            statusText: "Available 42 Seats",
+                            fare: 980,
+                            probability: "100% Confirmed",
+                            meaning: "42 confirmed sleeping berths are open in 3rd AC coaches (B1 to B6). Full dedicated berth is assigned immediately.",
+                            trend: "100% Confirmed status. High seat capacity in 3rd AC makes it the most popular air-conditioned class."
+                        },
+                        {
+                            code: "SL",
+                            name: "Sleeper (SL)",
+                            statusType: "WL",
+                            statusText: "WL 28",
+                            fare: 390,
+                            probability: "Medium (52% CNF Chance)",
+                            meaning: "Waitlist Position 28. Passenger cannot board the train if the ticket remains waitlisted after chart preparation.",
+                            trend: "Moderate confirmation outlook (52%) based on historical Sleeper Class cancellation rates on this corridor."
+                        }
+                    ]
+                },
+                {
+                    trainNo: "12498",
+                    trainName: "Shan-e-Punjab Superfast Express",
+                    departure: "03:10 PM",
+                    arrival: "09:30 PM",
+                    duration: "06h 20m",
+                    classes: [
+                        {
+                            code: "1A",
+                            name: "1st AC (1A)",
+                            statusType: "AVAILABLE",
+                            statusText: "Available 06 Seats",
+                            fare: 2380,
+                            probability: "100% Confirmed",
+                            meaning: "6 confirmed berths available in First AC. Dedicated cabin sleeping berth is guaranteed.",
+                            trend: "100% Confirmed status with spacious legroom and privacy curtains."
+                        },
+                        {
+                            code: "2A",
+                            name: "2nd AC (2A)",
+                            statusType: "AVAILABLE",
+                            statusText: "Available 19 Seats",
+                            fare: 1390,
+                            probability: "100% Confirmed",
+                            meaning: "19 confirmed berths open across 2-tier AC coaches A1 and A2.",
+                            trend: "100% Confirmed. Immediate coach and berth number allocation upon booking."
+                        },
+                        {
+                            code: "3A",
+                            name: "3rd AC (3A)",
+                            statusType: "RAC",
+                            statusText: "RAC 08",
+                            fare: 940,
+                            probability: "High (88% CNF Chance)",
+                            meaning: "RAC Position 8. Boarding is permitted with a shared Side-Lower seat, and only 8 cancellations are needed for a full berth.",
+                            trend: "88% confirmation likelihood based on historical cancellation velocity in 3A."
+                        },
+                        {
+                            code: "SL",
+                            name: "Sleeper (SL)",
+                            statusType: "AVAILABLE",
+                            statusText: "Available 64 Seats",
+                            fare: 375,
+                            probability: "100% Confirmed",
+                            meaning: "64 confirmed berths available across non-AC Sleeper coaches S1 to S9.",
+                            trend: "100% Confirmed. Ample lower and upper berths available."
+                        }
+                    ]
+                },
+                {
+                    trainNo: "12014",
+                    trainName: "Swarna Shatabdi / Intercity Express",
+                    departure: "06:05 AM",
+                    arrival: "11:50 AM",
+                    duration: "05h 45m",
+                    classes: [
+                        {
+                            code: "1A",
+                            name: "1st AC (1A)",
+                            statusType: "WL",
+                            statusText: "WL 04",
+                            fare: 2610,
+                            probability: "Medium (48% CNF Chance)",
+                            meaning: "Waitlist Position 4 in 1st AC. Requires 4 confirmed passengers to cancel before chart preparation.",
+                            trend: "Medium probability (48%) because First AC coaches have a smaller total berth pool."
+                        },
+                        {
+                            code: "2A",
+                            name: "2nd AC (2A)",
+                            statusType: "AVAILABLE",
+                            statusText: "Available 24 Seats",
+                            fare: 1510,
+                            probability: "100% Confirmed",
+                            meaning: "24 confirmed berths available in 2nd AC coaches. Full berth is allotted immediately.",
+                            trend: "100% Confirmed status for morning express departure."
+                        },
+                        {
+                            code: "3A",
+                            name: "3rd AC (3A)",
+                            statusType: "WL",
+                            statusText: "WL 15",
+                            fare: 1050,
+                            probability: "High (76% CNF Chance)",
+                            meaning: "Waitlist Position 15 in 3rd AC. Cannot board unless upgraded to at least RAC or Confirmed.",
+                            trend: "High chance (76%) of clearing into RAC/Confirmed prior to departure."
+                        },
+                        {
+                            code: "SL",
+                            name: "Sleeper (SL)",
+                            statusType: "RAC",
+                            statusText: "RAC 19",
+                            fare: 415,
+                            probability: "High (81% CNF Chance)",
+                            meaning: "RAC Position 19. Passenger is allowed to board the train on a shared Side-Lower berth.",
+                            trend: "High probability (81%) of full berth confirmation due to large Sleeper coach capacity."
+                        }
+                    ]
+                }
+            ],
+
+            rush: [
+                {
+                    trainNo: "12926",
+                    trainName: "Paschim Superfast Express",
+                    departure: "10:15 AM",
+                    arrival: "04:30 PM",
+                    duration: "06h 15m",
+                    classes: [
+                        {
+                            code: "1A",
+                            name: "1st AC (1A)",
+                            statusType: "WL",
+                            statusText: "WL 09",
+                            fare: 2450,
+                            probability: "Low (28% CNF Chance)",
+                            meaning: "Waitlist 9 in 1st AC during peak travel season. Boarding is not permitted unless confirmed.",
+                            trend: "Low probability (28%) due to limited cabin berths and minimal holiday cancellations."
+                        },
+                        {
+                            code: "2A",
+                            name: "2nd AC (2A)",
+                            statusType: "WL",
+                            statusText: "WL 28",
+                            fare: 1420,
+                            probability: "Low (24% CNF Chance)",
+                            meaning: "Waitlist 28 in 2nd AC. Requires substantial cancellations before chart preparation.",
+                            trend: "Low confirmation probability (24%) during high-demand periods."
+                        },
+                        {
+                            code: "3A",
+                            name: "3rd AC (3A)",
+                            statusType: "RAC",
+                            statusText: "RAC 14",
+                            fare: 980,
+                            probability: "Medium (62% CNF Chance)",
+                            meaning: "RAC 14 guarantees train boarding with a shared Side-Lower seat.",
+                            trend: "Moderate chance (62%) of upgrading to a full berth before departure."
+                        },
+                        {
+                            code: "SL",
+                            name: "Sleeper (SL)",
+                            statusType: "WL",
+                            statusText: "WL 68",
+                            fare: 390,
+                            probability: "Low (15% CNF Chance)",
+                            meaning: "Heavy Waitlist 68 in Sleeper Class. E-ticket will auto-cancel if still waitlisted at charting.",
+                            trend: "Low probability (15%) due to peak seasonal demand."
+                        }
+                    ]
+                },
+                {
+                    trainNo: "12498",
+                    trainName: "Shan-e-Punjab Superfast Express",
+                    departure: "03:10 PM",
+                    arrival: "09:30 PM",
+                    duration: "06h 20m",
+                    classes: [
+                        {
+                            code: "1A",
+                            name: "1st AC (1A)",
+                            statusType: "WL",
+                            statusText: "WL 05",
+                            fare: 2380,
+                            probability: "Low (35% CNF Chance)",
+                            meaning: "Waitlist 5 in First AC. No RAC provision exists in 1st AC coaches.",
+                            trend: "Low confirmation outlook (35%)."
+                        },
+                        {
+                            code: "2A",
+                            name: "2nd AC (2A)",
+                            statusType: "RAC",
+                            statusText: "RAC 16",
+                            fare: 1390,
+                            probability: "Medium (58% CNF Chance)",
+                            meaning: "RAC 16 allows boarding with a shared Side-Lower seat in Coach A1/A2.",
+                            trend: "Medium probability (58%) of upgrading to a full sleeping berth."
+                        },
+                        {
+                            code: "3A",
+                            name: "3rd AC (3A)",
+                            statusType: "WL",
+                            statusText: "WL 34",
+                            fare: 940,
+                            probability: "Low (30% CNF Chance)",
+                            meaning: "Waitlist 34 in 3rd AC. Cannot board unless ticket moves to RAC or CNF.",
+                            trend: "Low confirmation probability (30%)."
+                        },
+                        {
+                            code: "SL",
+                            name: "Sleeper (SL)",
+                            statusType: "WL",
+                            statusText: "WL 52",
+                            fare: 375,
+                            probability: "Low (20% CNF Chance)",
+                            meaning: "Waitlist 52 in Sleeper Class. High seasonal queue length.",
+                            trend: "Low confirmation probability (20%)."
+                        }
+                    ]
+                },
+                {
+                    trainNo: "12014",
+                    trainName: "Swarna Shatabdi / Intercity Express",
+                    departure: "06:05 AM",
+                    arrival: "11:50 AM",
+                    duration: "05h 45m",
+                    classes: [
+                        {
+                            code: "1A",
+                            name: "1st AC (1A)",
+                            statusType: "AVAILABLE",
+                            statusText: "Available 03 Seats",
+                            fare: 2610,
+                            probability: "100% Confirmed",
+                            meaning: "Last 3 confirmed berths remaining in First AC for early morning departure.",
+                            trend: "100% Confirmed if booked immediately."
+                        },
+                        {
+                            code: "2A",
+                            name: "2nd AC (2A)",
+                            statusType: "RAC",
+                            statusText: "RAC 11",
+                            fare: 1510,
+                            probability: "High (75% CNF Chance)",
+                            meaning: "RAC 11 permits travel with a shared seat and high chance of full berth allotment.",
+                            trend: "High confirmation outlook (75%)."
+                        },
+                        {
+                            code: "3A",
+                            name: "3rd AC (3A)",
+                            statusType: "WL",
+                            statusText: "WL 24",
+                            fare: 1050,
+                            probability: "Medium (44% CNF Chance)",
+                            meaning: "Waitlist 24 in 3rd AC. Requires 24 cancellations ahead in the queue.",
+                            trend: "Medium confirmation probability (44%)."
+                        },
+                        {
+                            code: "SL",
+                            name: "Sleeper (SL)",
+                            statusType: "WL",
+                            statusText: "WL 39",
+                            fare: 415,
+                            probability: "Low (29% CNF Chance)",
+                            meaning: "Waitlist 39 in Sleeper Class. No berth assigned at booking.",
+                            trend: "Low confirmation outlook (29%)."
+                        }
+                    ]
+                }
+            ],
+
+            tatkal: [
+                {
+                    trainNo: "12926",
+                    trainName: "Paschim Superfast Express",
+                    departure: "10:15 AM",
+                    arrival: "04:30 PM",
+                    duration: "06h 15m",
+                    classes: [
+                        {
+                            code: "1A",
+                            name: "1st AC (1A)",
+                            statusType: "WL",
+                            statusText: "TQWL 04",
+                            fare: 2950,
+                            probability: "Low (18% CNF Chance)",
+                            meaning: "Tatkal quota is not generally allocated in 1st AC; executive pool is waitlisted.",
+                            trend: "Low probability (18%) of confirmation."
+                        },
+                        {
+                            code: "2A",
+                            name: "2nd AC (2A)",
+                            statusType: "AVAILABLE",
+                            statusText: "Available 11 Seats",
+                            fare: 1840,
+                            probability: "100% Confirmed",
+                            meaning: "11 Tatkal berths open in 2nd AC. Includes dynamic Tatkal reservation charges.",
+                            trend: "100% Confirmed status during the 10:00 AM AC Tatkal booking window."
+                        },
+                        {
+                            code: "3A",
+                            name: "3rd AC (3A)",
+                            statusType: "AVAILABLE",
+                            statusText: "Available 42 Seats",
+                            fare: 1320,
+                            probability: "100% Confirmed",
+                            meaning: "42 Tatkal berths released across 3rd AC coaches for urgent next-day travel.",
+                            trend: "100% Confirmed status; Tatkal seats fill rapidly within minutes of opening."
+                        },
+                        {
+                            code: "SL",
+                            name: "Sleeper (SL)",
+                            statusType: "WL",
+                            statusText: "TQWL 28",
+                            fare: 510,
+                            probability: "Low (16% CNF Chance)",
+                            meaning: "Tatkal Waitlist 28 (TQWL). Unlike General Quota, Tatkal tickets bypass RAC and confirm only on direct cancellations.",
+                            trend: "Low probability (16%) because confirmed Tatkal tickets are non-refundable upon cancellation."
+                        }
+                    ]
+                },
+                {
+                    trainNo: "12498",
+                    trainName: "Shan-e-Punjab Superfast Express",
+                    departure: "03:10 PM",
+                    arrival: "09:30 PM",
+                    duration: "06h 20m",
+                    classes: [
+                        {
+                            code: "1A",
+                            name: "1st AC (1A)",
+                            statusType: "WL",
+                            statusText: "TQWL 02",
+                            fare: 2850,
+                            probability: "Low (22% CNF Chance)",
+                            meaning: "Waitlist 2 in Executive/First Class urgent pool.",
+                            trend: "Low confirmation probability (22%)."
+                        },
+                        {
+                            code: "2A",
+                            name: "2nd AC (2A)",
+                            statusType: "AVAILABLE",
+                            statusText: "Available 08 Seats",
+                            fare: 1790,
+                            probability: "100% Confirmed",
+                            meaning: "8 Tatkal berths available for immediate confirmation in 2nd AC.",
+                            trend: "100% Confirmed status."
+                        },
+                        {
+                            code: "3A",
+                            name: "3rd AC (3A)",
+                            statusType: "WL",
+                            statusText: "TQWL 12",
+                            fare: 1260,
+                            probability: "Low (26% CNF Chance)",
+                            meaning: "Tatkal Waitlist 12 in 3rd AC. Requires 12 Tatkal cancellations to confirm.",
+                            trend: "Low probability (26%) due to strict Tatkal refund rules."
+                        },
+                        {
+                            code: "SL",
+                            name: "Sleeper (SL)",
+                            statusType: "AVAILABLE",
+                            statusText: "Available 29 Seats",
+                            fare: 490,
+                            probability: "100% Confirmed",
+                            meaning: "29 Tatkal berths open in non-AC Sleeper Class (11:00 AM window).",
+                            trend: "100% Confirmed status."
+                        }
+                    ]
+                },
+                {
+                    trainNo: "12014",
+                    trainName: "Swarna Shatabdi / Intercity Express",
+                    departure: "06:05 AM",
+                    arrival: "11:50 AM",
+                    duration: "05h 45m",
+                    classes: [
+                        {
+                            code: "1A",
+                            name: "1st AC (1A)",
+                            statusType: "AVAILABLE",
+                            statusText: "Available 04 Seats",
+                            fare: 2990,
+                            probability: "100% Confirmed",
+                            meaning: "4 urgent quota berths open in First AC.",
+                            trend: "100% Confirmed status."
+                        },
+                        {
+                            code: "2A",
+                            name: "2nd AC (2A)",
+                            statusType: "WL",
+                            statusText: "TQWL 07",
+                            fare: 1890,
+                            probability: "Low (31% CNF Chance)",
+                            meaning: "Tatkal Waitlist 7 in 2nd AC. Boarding not allowed if ticket remains TQWL.",
+                            trend: "Low probability (31%)."
+                        },
+                        {
+                            code: "3A",
+                            name: "3rd AC (3A)",
+                            statusType: "AVAILABLE",
+                            statusText: "Available 18 Seats",
+                            fare: 1380,
+                            probability: "100% Confirmed",
+                            meaning: "18 Tatkal berths available in 3rd AC coaches.",
+                            trend: "100% Confirmed status."
+                        },
+                        {
+                            code: "SL",
+                            name: "Sleeper (SL)",
+                            statusType: "WL",
+                            statusText: "TQWL 19",
+                            fare: 525,
+                            probability: "Low (20% CNF Chance)",
+                            meaning: "Tatkal Waitlist 19 in Sleeper Class.",
+                            trend: "Low confirmation probability (20%)."
+                        }
+                    ]
+                }
+            ]
+        };
+
+        let currentScenarioKey = 'normal';
+
+        // Map status type (AVAILABLE, RAC, WL) to corresponding CSS theme classes
+        function getStatusTheme(statusType) {
+            if (statusType === "AVAILABLE") {
+                return {
+                    cardClass: "status-card-green",
+                    badgeClass: "status-badge-green",
+                    icon: "fa-circle-check"
+                };
+            } else if (statusType === "RAC") {
+                return {
+                    cardClass: "status-card-yellow",
+                    badgeClass: "status-badge-yellow",
+                    icon: "fa-user-group"
+                };
+            } else {
+                return {
+                    cardClass: "status-card-red",
+                    badgeClass: "status-badge-red",
+                    icon: "fa-clock"
+                };
+            }
+        }
+
+        // Render train list and class availability cards based on selected route and quota
+        function renderTrainCards(scenarioKey) {
+            currentScenarioKey = scenarioKey;
+            const container = document.getElementById('trainResultsContainer');
+            const origin = document.getElementById('originStation').value;
+            const dest = document.getElementById('destStation').value;
+            const dateVal = document.getElementById('travelDate').value;
+            const quotaSelect = document.getElementById('quotaSelect');
+            const quotaCode = quotaSelect.value;
+            const quotaText = quotaSelect.options[quotaSelect.selectedIndex].text;
+
+            // Update active route summary banner
+            document.getElementById('summaryQuotaBadge').textContent = quotaText;
+            document.getElementById('summaryRouteText').innerHTML = `${origin} &rarr; ${dest}`;
+            document.getElementById('summaryDateText').textContent = `Travel Date: ${dateVal}`;
+
+            const trains = trainScenarios[scenarioKey] || trainScenarios.normal;
+            let htmlContent = "";
+
+            trains.forEach((train, trainIndex) => {
+                let classCardsHTML = "";
+
+                train.classes.forEach((cls, classIndex) => {
+                    const theme = getStatusTheme(cls.statusType);
+                    // Adjust fare display slightly when Senior Citizen concession/lower-berth quota is selected
+                    const adjustedFare = quotaCode === "SS" ? Math.round(cls.fare * 0.9) : cls.fare;
+
+                    classCardsHTML += `
+                        <div onclick="inspectClassCard('${scenarioKey}', ${trainIndex}, ${classIndex})"
+                             class="berth-card cursor-pointer rounded-xl p-4 flex flex-col justify-between ${theme.cardClass}">
+                            <div>
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="font-extrabold text-sm tracking-tight">${cls.name}</span>
+                                    <span class="mono-font font-bold text-sm">₹${adjustedFare}</span>
+                                </div>
+
+                                <!-- Status Badge -->
+                                <div class="mt-3">
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-extrabold text-xs sm:text-sm shadow-sm ${theme.badgeClass}">
+                                        <i class="fa-solid ${theme.icon}"></i>
+                                        <span>${cls.statusText}</span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 pt-2.5 border-t border-black/10 flex items-center justify-between text-xs font-semibold">
+                                <span>${cls.probability}</span>
+                                <span class="underline flex items-center gap-1">
+                                    Breakdown <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                htmlContent += `
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
+                        <!-- Train Header -->
+                        <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                            <div class="flex items-center gap-3">
+                                <span class="px-3 py-1 rounded-lg bg-slate-900 text-amber-400 mono-font font-bold text-sm">
+                                    #${train.trainNo}
+                                </span>
+                                <div>
+                                    <h3 class="font-extrabold text-base sm:text-lg text-slate-900">${train.trainName}</h3>
+                                    <p class="text-xs text-slate-500">${origin.split(' - ')[0]} (${train.departure}) &mdash; ${train.duration} &mdash; ${dest.split(' - ')[0]} (${train.arrival})</p>
+                                </div>
+                            </div>
+                            <span class="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                                Quota: ${quotaText}
+                            </span>
+                        </div>
+
+                        <!-- 4 Class Availability Cards (1A, 2A, 3A, SL) -->
+                        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            ${classCardsHTML}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = htmlContent;
+        }
+
+        // Open detailed breakdown drawer when a class availability card is clicked
+        function inspectClassCard(scenarioKey, trainIndex, classIndex) {
+            const train = trainScenarios[scenarioKey][trainIndex];
+            const cls = train.classes[classIndex];
+            const theme = getStatusTheme(cls.statusType);
+
+            const panel = document.getElementById('classInspectorPanel');
+            document.getElementById('inspectorTrainTitle').textContent = `${train.trainNo} ${train.trainName} • ${cls.name}`;
+            
+            const badge = document.getElementById('inspectorStatusBadge');
+            badge.textContent = cls.statusText;
+            badge.className = `px-3 py-1 rounded-lg text-sm font-bold ${theme.badgeClass}`;
+
+            document.getElementById('inspectorHeadingText').textContent = `Outlook: ${cls.probability}`;
+            document.getElementById('inspectorFareBadge').textContent = `Estimated Fare: ₹${cls.fare}`;
+            document.getElementById('inspectorMeaningText').textContent = cls.meaning;
+            document.getElementById('inspectorProbabilityText').textContent = cls.trend;
+
+            const coachConfigurations = {
+                "1A": "1st AC (Coach H1): 18 to 24 lockable cabin berths (Lower & Upper berths only; no middle berths).",
+                "2A": "2nd AC (Coaches A1–A2): 48 to 54 berths per coach (Lower, Upper, Side Lower, Side Upper).",
+                "3A": "3rd AC (Coaches B1–B6): 64 to 72 berths per coach (Lower, Middle, Upper, Side Lower, Side Upper).",
+                "SL": "Sleeper Class (Coaches S1–S10): 72 to 80 non-AC berths across 9 open bays."
+            };
+            document.getElementById('inspectorCoachInfoText').textContent = coachConfigurations[cls.code];
+
+            panel.classList.remove('hidden');
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function closeInspector() {
+            document.getElementById('classInspectorPanel').classList.add('hidden');
+        }
+
+        // Handle train search form submission and station validation
+        document.getElementById('trainSearchForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const origin = document.getElementById('originStation').value;
+            const dest = document.getElementById('destStation').value;
+            const quota = document.getElementById('quotaSelect').value;
+            const errorBox = document.getElementById('searchErrorBox');
+
+            if (origin === dest) {
+                errorBox.classList.remove('hidden');
+                return;
+            }
+            errorBox.classList.add('hidden');
+
+            if (quota === 'TQ') {
+                renderTrainCards('tatkal');
+            } else {
+                renderTrainCards('normal');
+            }
+        });
+
+        // Swap Origin and Destination stations
+        document.getElementById('swapStationsBtn').addEventListener('click', function() {
+            const originEl = document.getElementById('originStation');
+            const destEl = document.getElementById('destStation');
+            const temp = originEl.value;
+            originEl.value = destEl.value;
+            destEl.value = temp;
+        });
+
+        // Load demand scenario preset
+        function loadScenario(type) {
+            document.getElementById('searchErrorBox').classList.add('hidden');
+            if (type === 'tatkal') {
+                document.getElementById('quotaSelect').value = 'TQ';
+            } else {
+                document.getElementById('quotaSelect').value = 'GN';
+            }
+            renderTrainCards(type);
+        }
+
+        // Preset PNR records for High, Medium, and Low confirmation probability cases
+        const samplePNRDatabase = {
+            "2458910342": {
+                pnr: "2458910342",
+                trainName: "12926 Paschim Superfast Exp",
+                route: "PGW (Phagwara Jn) → NDLS (New Delhi)",
+                classQuota: "3A (3rd AC) | General (GNWL)",
+                journeyDate: "11 Nov 2026",
+                chartStatus: "CHART NOT PREPARED",
+                bookingType: "GNWL",
+                bookingNumber: 18,
+                currentType: "WL",
+                currentNumber: 4,
+                coachBerth: "Waitlist Queue #4 (Expected Coach B4)",
+                probability: 86,
+                level: "HIGH",
+                explanation: "Passenger booked at GNWL 18 and has advanced to WL 4 following 14 cancellations. General Quota (GNWL) has the largest seat allocation pool, giving this ticket an 86% confirmation probability before chart preparation."
+            },
+            "4819205718": {
+                pnr: "4819205718",
+                trainName: "12498 Shan-e-Punjab Express",
+                route: "JRC (Jalandhar Cantt) → NDLS (New Delhi)",
+                classQuota: "2A (2nd AC) | General (GNWL)",
+                journeyDate: "12 Nov 2026",
+                chartStatus: "CHART NOT PREPARED",
+                bookingType: "WL",
+                bookingNumber: 26,
+                currentType: "RAC",
+                currentNumber: 11,
+                coachBerth: "Shared Side-Lower (Coach A1, Seat 47)",
+                probability: 54,
+                level: "MEDIUM",
+                explanation: "Ticket progressed from WL 26 at booking to RAC 11 currently. Boarding and a shared sitting berth are guaranteed, while upgrading to an independent full sleeping berth in 2nd AC has a Medium (54%) probability."
+            },
+            "8391047261": {
+                pnr: "8391047261",
+                trainName: "12014 Swarna Shatabdi / Intercity",
+                route: "LDH (Ludhiana Jn) → CSMT (Mumbai)",
+                classQuota: "SL (Sleeper) | Tatkal (TQWL)",
+                journeyDate: "11 Nov 2026",
+                chartStatus: "CHART NOT PREPARED",
+                bookingType: "TQWL",
+                bookingNumber: 48,
+                currentType: "WL",
+                currentNumber: 34,
+                coachBerth: "No Berth Allotted (Waitlist Queue #34)",
+                probability: 22,
+                level: "LOW",
+                explanation: "Ticket is under Tatkal Waitlist (Current: WL 34). Because Tatkal quotas have smaller seat pools and confirmed Tatkal tickets are non-refundable, historical confirmation probability for TQWL above 25 is Low (22%)."
+            }
+        };
+
+        let activePNRData = { ...samplePNRDatabase["2458910342"] };
+
+        // Deterministically calculate PNR status and waitlist confirmation probability for any 10-digit input
+        function generateDynamicPNR(pnrString) {
+            const seedA = parseInt(pnrString.slice(0, 2), 10);
+            const seedB = parseInt(pnrString.slice(-2), 10);
+            const currentNum = (seedB % 32) + 2; // Deterministic queue position between 2 and 33
+            const bookingNum = currentNum + ((seedA % 16) + 6);
+
+            let level = "MEDIUM";
+            let probability = 56;
+            let currentType = "WL";
+            let quotaLabel = "3A (3rd AC) | General (GNWL)";
+
+            if (currentNum <= 9) {
+                currentType = "RAC";
+                probability = 84;
+                level = "HIGH";
+            } else if (currentNum <= 20) {
+                currentType = "WL";
+                probability = 54;
+                level = "MEDIUM";
+            } else {
+                currentType = "WL";
+                probability = 24;
+                level = "LOW";
+                quotaLabel = "SL (Sleeper) | Tatkal (TQWL)";
+            }
+
+            return {
+                pnr: pnrString,
+                trainName: "12926 Paschim Superfast Exp",
+                route: "PGW (Phagwara Jn) → NDLS (New Delhi)",
+                classQuota: quotaLabel,
+                journeyDate: document.getElementById('travelDate').value,
+                chartStatus: "CHART NOT PREPARED",
+                bookingType: "WL",
+                bookingNumber: bookingNum,
+                currentType: currentType,
+                currentNumber: currentNum,
+                coachBerth: currentType === "RAC" ? `Shared Side-Lower (Coach B2, Seat ${currentNum * 2 + 7})` : `Waitlist Queue #${currentNum}`,
+                probability: probability,
+                level: level,
+                explanation: `Ticket advanced from WL ${bookingNum} at booking to ${currentType} ${currentNum} after ${bookingNum - currentNum} cancellations. Based on historical cancellation trends for ${quotaLabel}, confirmation likelihood is ${level} (${probability}%).`
+            };
+        }
+
+        // Update PNR status table and probability meter UI
+        function renderPNRData(data) {
+            document.getElementById('pnrDisplayNumber').textContent = data.pnr;
+            document.getElementById('pnrChartStatus').textContent = data.chartStatus;
+            document.getElementById('pnrTrainName').textContent = data.trainName;
+            document.getElementById('pnrRoute').textContent = data.route;
+            document.getElementById('pnrClassQuota').textContent = data.classQuota;
+            document.getElementById('pnrJourneyDate').textContent = data.journeyDate;
+
+            const bookingLabel = `${data.bookingType} ${data.bookingNumber}`;
+            const currentLabel = data.currentType === "CNF" ? "CONFIRMED (CNF)" : `${data.currentType} ${data.currentNumber}`;
+
+            let currentBadgeClass = "status-badge-red";
+            if (data.currentType === "CNF") currentBadgeClass = "status-badge-green";
+            else if (data.currentType === "RAC") currentBadgeClass = "status-badge-yellow";
+
+            const tbody = document.getElementById('pnrPassengerTableBody');
+            tbody.innerHTML = `
+                <tr class="bg-white">
+                    <td class="py-3.5 px-4 font-bold text-slate-900">
+                        Passenger 1 <span class="text-xs font-normal text-slate-500 block">Adult Traveler</span>
+                    </td>
+                    <td class="py-3.5 px-4">
+                        <span class="mono-font font-bold px-2.5 py-1 rounded bg-slate-200 text-slate-800 text-xs">
+                            ${bookingLabel}
+                        </span>
+                    </td>
+                    <td class="py-3.5 px-4">
+                        <span class="mono-font font-bold px-3 py-1 rounded-md text-xs ${currentBadgeClass}">
+                            ${currentLabel}
+                        </span>
+                    </td>
+                    <td class="py-3.5 px-4 font-semibold text-slate-700 text-xs sm:text-sm">
+                        ${data.coachBerth}
+                    </td>
+                </tr>
+            `;
+
+            // Update Waitlist Confirmation Probability Meter
+            const probBadge = document.getElementById('probLevelBadge');
+            const probPercentage = document.getElementById('probPercentageText');
+            const probBar = document.getElementById('probMeterBar');
+            const probReasonLabel = document.getElementById('probReasonLabel');
+
+            probPercentage.textContent = `${data.probability}%`;
+            probBar.style.width = `${data.probability}%`;
+            probReasonLabel.textContent = data.level;
+            document.getElementById('probExplanationText').textContent = data.explanation;
+
+            const movedSpots = Math.max(0, data.bookingNumber - data.currentNumber);
+            document.getElementById('probQueueMovement').textContent = `Moved +${movedSpots} positions`;
+
+            if (data.level === "HIGH") {
+                probBadge.textContent = "HIGH PROBABILITY";
+                probBadge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider status-badge-green";
+                probPercentage.className = "text-4xl font-extrabold mono-font text-emerald-600";
+                probBar.className = "probability-fill h-full rounded-full bg-emerald-500";
+            } else if (data.level === "MEDIUM") {
+                probBadge.textContent = "MEDIUM PROBABILITY";
+                probBadge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider status-badge-yellow";
+                probPercentage.className = "text-4xl font-extrabold mono-font text-amber-600";
+                probBar.className = "probability-fill h-full rounded-full bg-amber-500";
+            } else {
+                probBadge.textContent = "LOW PROBABILITY";
+                probBadge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider status-badge-red";
+                probPercentage.className = "text-4xl font-extrabold mono-font text-rose-600";
+                probBar.className = "probability-fill h-full rounded-full bg-rose-600";
+            }
+        }
+
+        // Validate 10-digit PNR input and render status
+        document.getElementById('pnrForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const pnrValue = document.getElementById('pnrInput').value.trim();
+            const errorBox = document.getElementById('pnrErrorBox');
+
+            if (!/^\d{10}$/.test(pnrValue)) {
+                errorBox.classList.remove('hidden');
+                return;
+            }
+            errorBox.classList.add('hidden');
+
+            if (samplePNRDatabase[pnrValue]) {
+                activePNRData = { ...samplePNRDatabase[pnrValue] };
+            } else {
+                activePNRData = generateDynamicPNR(pnrValue);
+            }
+
+            renderPNRData(activePNRData);
+        });
+
+        // Populate sample PNR on badge click
+        function fillSamplePNR(sampleNumber) {
+            document.getElementById('pnrInput').value = sampleNumber;
+            document.getElementById('pnrErrorBox').classList.add('hidden');
+            activePNRData = { ...samplePNRDatabase[sampleNumber] };
+            renderPNRData(activePNRData);
+        }
+
+        // Simulate daily passenger cancellations advancing ticket from WL -> RAC -> Confirmed (CNF)
+        document.getElementById('simulateCancellationBtn').addEventListener('click', function() {
+            if (activePNRData.currentType === "CNF") {
+                return;
+            }
+
+            // Advance queue position by simulating 6 cancellations per day
+            activePNRData.currentNumber = Math.max(0, activePNRData.currentNumber - 6);
+
+            if (activePNRData.currentNumber === 0) {
+                activePNRData.currentType = "CNF";
+                activePNRData.chartStatus = "CHART PREPARED";
+                activePNRData.coachBerth = "B4, Berth 32 - Lower";
+                activePNRData.probability = 100;
+                activePNRData.level = "HIGH";
+                activePNRData.explanation = "All preceding waitlist and RAC positions have cleared due to passenger cancellations. Ticket is now 100% Confirmed (CNF) with assigned Coach B4, Berth 32 (Lower Berth).";
+            } else if (activePNRData.currentNumber <= 10) {
+                activePNRData.currentType = "RAC";
+                activePNRData.coachBerth = `Shared Side-Lower (RAC ${activePNRData.currentNumber})`;
+                activePNRData.probability = Math.min(94, activePNRData.probability + 18);
+                activePNRData.level = "HIGH";
+                activePNRData.explanation = `Following +1 day of cancellations, the ticket advanced to RAC ${activePNRData.currentNumber}. Train boarding is now guaranteed with a High (${activePNRData.probability}%) probability of full berth confirmation.`;
+            } else {
+                activePNRData.probability = Math.min(70, activePNRData.probability + 15);
+                activePNRData.level = activePNRData.probability >= 45 ? "MEDIUM" : "LOW";
+                activePNRData.coachBerth = `Waitlist Queue #${activePNRData.currentNumber}`;
+                activePNRData.explanation = `Simulated +1 day of cancellations: ticket advanced 6 spots to ${activePNRData.currentType} ${activePNRData.currentNumber}, increasing confirmation probability to ${activePNRData.probability}%.`;
+            }
+
+            renderPNRData(activePNRData);
+        });
+
+        // Initialize application view on load
+        window.addEventListener('DOMContentLoaded', () => {
+            renderTrainCards('normal');
+            renderPNRData(activePNRData);
+        });
+    </script>
+</body>
+</html>

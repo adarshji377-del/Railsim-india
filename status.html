@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PNR Status Tracker - Railway Simulator</title>
+    <style>
+        body {
+            background-color: #fff9e6;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #cc6600;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        nav {
+            background-color: #ff9933;
+            text-align: center;
+            padding: 10px;
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            font-weight: bold;
+        }
+        nav a:hover {
+            background-color: #cc6600;
+        }
+        .content {
+            width: 70%;
+            margin: 25px auto;
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #ffd11a;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .ticket-box {
+            background-color: #f2f9ff;
+            border: 2px dashed #3399ff;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 6px;
+            text-align: left;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #ff9933;
+            color: white;
+        }
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>PNR Status & Waitlist Probability Tracker</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="book.html">Search Trains & Berths</a>
+        <a href="status.html">Check PNR Status</a>
+    </nav>
+
+    <div class="content">
+        <h2>Track Your 10-Digit PNR Status</h2>
+        <form onsubmit="alert('PNR 4521896321 Status Updated Successfully!'); return false;">
+            <input type="text" placeholder="Enter 10-Digit PNR Number (e.g., 4521896321)" pattern="[0-9]{10}" maxlength="10" required style="padding: 8px; width: 60%;">
+            <input type="submit" value="Check PNR Status" style="padding: 8px 15px; background-color: #cc6600; color: white; border: none; font-weight: bold; cursor: pointer;">
+        </form>
+
+        <!-- Ticket Card showing Train, Route, Date, and Quota -->
+        <div class="ticket-box">
+            <h3>Latest PNR Pass: #4521896321</h3>
+            <p><strong>Train Name & Number:</strong> 12497 Shan-e-Punjab Superfast Express</p>
+            <p><strong>Route:</strong> New Delhi (NDLS) to Jalandhar Cantt (JRC)</p>
+            <p><strong>Travel Date:</strong> 15th November 2026 | <strong>Quota:</strong> General (GN)</p>
+            <p><strong>Chart Status:</strong> <span style="color: green; font-weight: bold;">Chart Not Prepared (Historical Cancellation Prediction Active)</span></p>
+        </div>
+
+        <h3>Passenger Booking Status vs. Current Status</h3>
+        <table>
+            <tr>
+                <th>Passenger</th>
+                <th>Class</th>
+                <th>Booking Status</th>
+                <th>Current Status</th>
+                <th>Waitlist Confirmation Probability Meter</th>
+            </tr>
+            <tr>
+                <td>Passenger 1</td>
+                <td>1st AC (1A)</td>
+                <td>Available (CNF)</td>
+                <td style="color: green; font-weight: bold;">CNF (Coach H1, Berth 12)</td>
+                <td><meter value="100" min="0" max="100"></meter> <strong style="color: green;">High (100%)</strong></td>
+            </tr>
+            <tr>
+                <td>Passenger 2</td>
+                <td>2nd AC (2A)</td>
+                <td>WL 18</td>
+                <td style="color: #d99b00; font-weight: bold;">RAC 4</td>
+                <td><meter value="85" min="0" max="100"></meter> <strong style="color: green;">High (85%)</strong></td>
+            </tr>
+            <tr>
+                <td>Passenger 3</td>
+                <td>3rd AC (3A)</td>
+                <td>WL 28</td>
+                <td style="color: #cc6600; font-weight: bold;">WL 11</td>
+                <td><meter value="55" min="0" max="100"></meter> <strong style="color: #d99b00;">Medium (55%)</strong></td>
+            </tr>
+            <tr>
+                <td>Passenger 4</td>
+                <td>3rd AC (3A - Tatkal)</td>
+                <td>TQWL 35</td>
+                <td style="color: red; font-weight: bold;">TQWL 28</td>
+                <td><meter value="20" min="0" max="100"></meter> <strong style="color: red;">Low (20%)</strong></td>
+            </tr>
+        </table>
+        <br>
+        <a href="book.html" style="color: #cc6600; text-decoration: underline; font-weight: bold;">&larr; Search or Book Another Train Ticket</a>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Railway Berth & PNR Simulator | CSE326 Project</p>
+    </footer>
+</body>
+</html>

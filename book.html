@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search Trains & Berths - Railway Simulator</title>
+    <style>
+        body {
+            background-color: #e6f2ff;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #004080;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        nav {
+            background-color: #3399ff;
+            text-align: center;
+            padding: 10px;
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            font-weight: bold;
+        }
+        nav a:hover {
+            background-color: #004080;
+        }
+        .form-container {
+            background-color: white;
+            width: 65%;
+            margin: 25px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0 15px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        input[type="submit"] {
+            background-color: #004080;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            padding: 10px;
+        }
+        input[type="submit"]:hover {
+            background-color: #00264d;
+        }
+        .card-box {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .card {
+            border: 2px solid #ccc;
+            padding: 12px;
+            width: 23%;
+            text-align: center;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Train Search & Berth Availability Portal</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="book.html">Search Trains & Berths</a>
+        <a href="status.html">Check PNR Status</a>
+    </nav>
+
+    <div class="form-container">
+        <h2>1. Search Train & Select Quota</h2>
+        <!-- Form routes to status.html on submission -->
+        <form action="status.html" method="GET" onsubmit="alert('Ticket Booked Successfully! Generated 10-Digit PNR: 4521896321');">
+            <label for="origin">Origin Station:</label>
+            <select id="origin" name="origin" required>
+                <option>New Delhi (NDLS)</option>
+                <option>Ludhiana Jn (LDH)</option>
+                <option>Mumbai Central (MMCT)</option>
+                <option>Amritsar Jn (ASR)</option>
+            </select>
+
+            <label for="destination">Destination Station:</label>
+            <select id="destination" name="destination" required>
+                <option>Jalandhar Cantt (JRC)</option>
+                <option>New Delhi (NDLS)</option>
+                <option>Varanasi Jn (BSB)</option>
+                <option>Chandigarh (CDG)</option>
+            </select>
+
+            <label for="date">Travel Date:</label>
+            <input type="date" id="date" name="date" required>
+
+            <label for="quota">Select Quota:</label>
+            <select id="quota" name="quota">
+                <option>General Quota (GN)</option>
+                <option>Tatkal Quota (TQ)</option>
+                <option>Senior Citizen Quota (SS)</option>
+            </select>
+
+            <h3>2. Class-Wise Seat Availability (12497 Shan-e-Punjab / Rajdhani Exp)</h3>
+            <div class="card-box">
+                <div class="card">
+                    <strong>1st AC (1A)</strong>
+                    <p style="color: green; font-weight: bold;">Available 42 Seats</p>
+                </div>
+                <div class="card">
+                    <strong>2nd AC (2A)</strong>
+                    <p style="color: #d99b00; font-weight: bold;">RAC 14</p>
+                </div>
+                <div class="card">
+                    <strong>3rd AC (3A)</strong>
+                    <p style="color: red; font-weight: bold;">WL 28</p>
+                </div>
+                <div class="card">
+                    <strong>Sleeper (SL)</strong>
+                    <p style="color: green; font-weight: bold;">Available 42 Seats</p>
+                </div>
+            </div>
+
+            <label for="travel_class">Select Travel Class to Book:</label>
+            <select id="travel_class" name="travel_class">
+                <option>1st AC (1A) - Available 42 Seats (Green)</option>
+                <option>2nd AC (2A) - RAC 14 (Yellow)</option>
+                <option>3rd AC (3A) - WL 28 (Red)</option>
+                <option>Sleeper Class (SL) - Available 42 Seats (Green)</option>
+            </select>
+
+            <input type="submit" value="Confirm Booking & Generate 10-Digit PNR">
+        </form>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Railway Berth & PNR Simulator | CSE326 Project</p>
+    </footer>
+</body>
+</html>

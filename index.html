@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Railway Simulator - Home</title>
+    <style>
+        body {
+            background-color: #f2f2f2;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #004080;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        nav {
+            background-color: #3399ff;
+            text-align: center;
+            padding: 10px;
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            font-weight: bold;
+        }
+        nav a:hover {
+            background-color: #004080;
+        }
+        .container {
+            padding: 20px;
+            text-align: center;
+        }
+        .box {
+            background-color: white;
+            border: 2px solid #ccc;
+            padding: 20px;
+            margin: 15px auto;
+            width: 65%;
+            border-radius: 5px;
+        }
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Railway Passenger Berth Availability & PNR Simulator</h1>
+        <p>First Year B.Tech Web Development Project (Course Code: CSE326)</p>
+    </header>
+
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="book.html">Search Trains & Berths</a>
+        <a href="status.html">Check PNR Status</a>
+    </nav>
+
+    <div class="container">
+        <div class="box">
+            <h2>Welcome to Indian Railway Seat & PNR Simulator</h2>
+            <p>Check simulated train berth availability across 1st AC (1A), 2nd AC (2A), 3rd AC (3A), and Sleeper (SL) classes, and predict whether your waitlisted ticket will confirm before travel.</p>
+            <br>
+            <a href="book.html" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">Search Trains & Seats</a>
+        </div>
+
+        <div class="box" style="text-align: left;">
+            <h3 style="text-align: center; color: #004080;">Understanding Railway Reservation Terms</h3>
+            <p><strong style="color: green;">1. Confirmed (CNF):</strong> A full sleeping berth is allotted to the passenger at the time of booking.</p>
+            <p><strong style="color: #cc8800;">2. RAC (Reservation Against Cancellation):</strong> Two passengers share a side-lower sitting berth; turns into a full sleeping berth if confirmed passengers cancel.</p>
+            <p><strong style="color: red;">3. Waitlist (WL):</strong> No berth is allotted yet. The ticket moves up as Confirmed and RAC passengers cancel their tickets.</p>
+            <p><strong style="color: #004080;">4. Quotas (General, Tatkal, Senior Citizen):</strong> Dedicated reservation buckets for standard bookings, emergency 1-day-prior travel, and elderly travelers.</p>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Railway Berth & PNR Simulator | Team: Shery Samrat (12627884), Adarsh Gupta (12611678), Paidakula Lokeshwar (12608640)</p>
+    </footer>
+</body>
+</html>
